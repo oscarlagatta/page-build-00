@@ -45,6 +45,7 @@ export default function Page() {
   const [sourceFilter, setSourceFilter] = React.useState("ALL");
   const [actionCodeFilter, setActionCodeFilter] = React.useState("ALL");
   const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
 
   const filteredData = React.useMemo(() => {
     return mockData
@@ -83,7 +84,7 @@ export default function Page() {
       {/* Main Content */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="flex items-center justify-between border-b border-border bg-card px-6 py-3">
+        <header className="flex items-center justify-between border-b border-border bg-card px-4 py-2">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -124,13 +125,13 @@ export default function Page() {
         </header>
 
         {/* Tabs */}
-        <div className="border-b border-border bg-card px-6">
+        <div className="border-b border-border bg-card px-4">
           <nav className="flex gap-0">
             {tabs.map((tab) => (
               <button
                 key={tab.label}
                 type="button"
-                className={`border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
                   tab.active
                     ? "border-[hsl(217,91%,40%)] text-[hsl(217,91%,40%)]"
                     : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
@@ -143,8 +144,8 @@ export default function Page() {
         </div>
 
         {/* Content */}
-        <main className="flex flex-1 flex-col overflow-hidden px-6 py-5">
-          <div className="mx-auto flex max-w-[1400px] flex-1 flex-col gap-5 overflow-hidden">
+        <main className="flex flex-1 flex-col overflow-hidden px-4 py-3">
+          <div className="flex flex-1 flex-col gap-3 overflow-hidden">
             {/* Filters */}
             <DashboardFilters
               statusFilter={statusFilter}
@@ -175,7 +176,8 @@ export default function Page() {
               data={filteredData}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
-              itemsPerPage={8}
+              itemsPerPage={itemsPerPage}
+              onItemsPerPageChange={setItemsPerPage}
             />
           </div>
         </main>

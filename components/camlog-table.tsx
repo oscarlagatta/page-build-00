@@ -32,6 +32,7 @@ interface CamlogTableProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   itemsPerPage?: number;
+  onItemsPerPageChange?: (value: number) => void;
 }
 
 function formatTimestamp(iso: string): string {
@@ -70,8 +71,10 @@ export function CamlogTable({
   searchQuery,
   onSearchChange,
   itemsPerPage = 10,
+  onItemsPerPageChange,
 }: CamlogTableProps) {
   const [showExpanded, setShowExpanded] = React.useState(false);
+  const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = React.useState(1);
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
@@ -167,96 +170,113 @@ export function CamlogTable({
                 </TableCell>
               </TableRow>
             ) : (
-              paginatedData.map((row) => (
-                <React.Fragment key={row.id}>
-                  <TableRow className="border-b border-border transition-colors hover:bg-muted/30">
-                    <TableCell className="text-sm font-medium text-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
-                        {row.actionCode}
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {row.id}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {row.metricType}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      <div className="space-y-0.5">
-                        <div>
-                          {"T: "}
-                          {row.target}
+              paginatedData.map((row) => {
+                const isExpanded = showExpanded || expandedRows.has(row.id);
+                return (
+                  <React.Fragment key={row.id}>
+                    <TableRow className="cursor-pointer border-b border-border transition-colors hover:bg-muted/30" onClick={() => {
+                      const newExpanded = new Set(expandedRows);
+                      if (newExpanded.has(row.id)) {
+                        newExpanded.delete(row.id);
+                      } else {
+                        newExpanded.add(row.id);
+                      }
+                      setExpandedRows(newExpanded);
+                    }}>
+                      <TableCell className="text-sm font-medium text-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                          {row.actionCode}
                         </div>
-                        <div>
-                          {"L: "}
-                          {row.leader}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {row.source}
-                    </TableCell>
-                    <TableCell className="text-center text-xs text-muted-foreground">
-                      {formatTimestamp(row.timestamp)}
-                    </TableCell>
-                    <TableCell
-                      className={`text-center text-xs ${getValueCellStyle(row.status)}`}
-                    >
-                      {row.value}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span
-                        className={`inline-block rounded px-3 py-1 text-xs ${getStatusCellStyle(row.status)}`}
-                      >
-                        {row.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                  {showExpanded && (
-                    <TableRow className="bg-muted/20">
-                      <TableCell
-                        colSpan={8}
-                        className="border-b-2 border-border py-3 pl-10 text-xs text-muted-foreground"
-                      >
-                        <div className="flex gap-8">
+                      </TableCell>
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.id}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {row.metricType}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        <div className="space-y-0.5">
                           <div>
-                            <span className="font-medium text-foreground">
-                              Full ID:{" "}
-                            </span>
-                            {row.id}
-                          </div>
-                          <div>
-                            <span className="font-medium text-foreground">
-                              Source:{" "}
-                            </span>
-                            {row.source}
-                          </div>
-                          <div>
-                            <span className="font-medium text-foreground">
-                              Target:{" "}
-                            </span>
+                            {"T: "}
                             {row.target}
                           </div>
                           <div>
-                            <span className="font-medium text-foreground">
-                              Leader:{" "}
-                            </span>
+                            {"L: "}
                             {row.leader}
                           </div>
                         </div>
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {row.source}
+                      </TableCell>
+                      <TableCell className="text-center text-xs text-muted-foreground">
+                        {formatTimestamp(row.timestamp)}
+                      </TableCell>
+                      <TableCell
+                        className={`text-center text-xs ${getValueCellStyle(row.status)}`}
+                      >
+                        {row.value}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span
+                          className={`inline-block rounded px-3 py-1 text-xs ${getStatusCellStyle(row.status)}`}
+                        >
+                          {row.status}
+                        </span>
+                      </TableCell>
                     </TableRow>
-                  )}
-                </React.Fragment>
-              ))
+                    {isExpanded && (
+                      <TableRow className="bg-muted/20">
+                        <TableCell
+                          colSpan={8}
+                          className="border-b-2 border-border py-3 pl-10 text-xs text-muted-foreground"
+                        >
+                          <div className="flex gap-8">
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Full ID:{" "}
+                              </span>
+                              {row.id}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Source:{" "}
+                              </span>
+                              {row.source}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Target:{" "}
+                              </span>
+                              {row.target}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Leader:{" "}
+                              </span>
+                              {row.leader}
+                            </div>
+                            <div>
+                              <span className="font-medium text-foreground">
+                                Metric Type:{" "}
+                              </span>
+                              {row.metricType}
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </div>
 
       {/* Footer with Pagination */}
-      <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs">
+      <div className="flex flex-col gap-3 border-t border-border px-5 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-muted-foreground">
           <div className="h-2 w-2 animate-pulse rounded-full bg-[hsl(217,91%,40%)]" />
           <span>
@@ -264,7 +284,27 @@ export function CamlogTable({
           </span>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-foreground">Items per page:</span>
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                const newValue = Number(e.target.value);
+                onItemsPerPageChange?.(newValue);
+                setCurrentPage(1);
+              }}
+              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,40%)] focus:ring-offset-1"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={15}>15</option>
+              <option value={20}>20</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          
           <span className="text-muted-foreground">
             Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} event{data.length === 1 ? "" : "s"}
           </span>
