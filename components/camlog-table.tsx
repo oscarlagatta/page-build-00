@@ -31,6 +31,7 @@ interface CamlogTableProps {
   data: CamlogRow[];
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  itemsPerPage?: number;
 }
 
 function formatTimestamp(iso: string): string {
@@ -68,8 +69,19 @@ export function CamlogTable({
   data,
   searchQuery,
   onSearchChange,
+  itemsPerPage = 10,
 }: CamlogTableProps) {
   const [showExpanded, setShowExpanded] = React.useState(false);
+  const [currentPage, setCurrentPage] = React.useState(1);
+
+  const totalPages = Math.ceil(data.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedData = data.slice(startIndex, endIndex);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [data.length]);
 
   return (
     <div className="rounded-md border border-border bg-card">
@@ -140,7 +152,7 @@ export function CamlogTable({
           </TableHeader>
 
           <TableBody>
-            {data.length === 0 ? (
+            {paginatedData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={8}
@@ -155,7 +167,7 @@ export function CamlogTable({
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((row) => (
+              paginatedData.map((row) => (
                 <React.Fragment key={row.id}>
                   <TableRow className="border-b border-border transition-colors hover:bg-muted/30">
                     <TableCell className="text-sm font-medium text-foreground">
@@ -243,17 +255,58 @@ export function CamlogTable({
         </Table>
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
+      {/* Footer with Pagination */}
+      <div className="flex items-center justify-between border-t border-border px-5 py-3 text-xs">
+        <div className="flex items-center gap-2 text-muted-foreground">
           <div className="h-2 w-2 animate-pulse rounded-full bg-[hsl(217,91%,40%)]" />
           <span>
             Data Source: Splunk Enterprise (MVP uses mock data)
           </span>
         </div>
-        <span>
-          Showing {data.length} event{data.length === 1 ? "" : "s"}
-        </span>
+        
+        <div className="flex items-center gap-4">
+          <span className="text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} event{data.length === 1 ? "" : "s"}
+          </span>
+          
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              First
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage === 1}
+              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span className="px-2 text-xs font-medium text-foreground">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+              disabled={currentPage === totalPages}
+              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Last
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -142,9 +142,9 @@ export default function Page() {
           </nav>
         </div>
 
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto px-6 py-5">
-          <div className="mx-auto max-w-[1400px] space-y-5">
+        {/* Content */}
+        <main className="flex flex-1 flex-col overflow-hidden px-6 py-5">
+          <div className="mx-auto flex max-w-[1400px] flex-1 flex-col gap-5 overflow-hidden">
             {/* Filters */}
             <DashboardFilters
               statusFilter={statusFilter}
@@ -175,6 +175,7 @@ export default function Page() {
               data={filteredData}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
+              itemsPerPage={8}
             />
           </div>
         </main>
