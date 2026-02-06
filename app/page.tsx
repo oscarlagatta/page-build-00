@@ -37,9 +37,6 @@ const mockData: CamlogRow[] = [
 
 const tabs = [
   { label: "Camlog Overview", active: true },
-  { label: "Metric Inventory", active: false },
-  { label: "Event Management", active: false },
-  { label: "Data Management", active: false },
 ];
 
 export default function Page() {
