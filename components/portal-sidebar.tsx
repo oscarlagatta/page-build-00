@@ -1,5 +1,7 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -11,17 +13,21 @@ import {
   Search,
   Settings,
   Bell,
+  Mail,
 } from "lucide-react";
 
 const navItems = [
   { label: "Application Portfolio", icon: LayoutDashboard, href: "#" },
   { label: "E2E Payment Monitor", icon: CreditCard, href: "#" },
-  { label: "Camlog Monitor", icon: Monitor, href: "#", active: true },
+  { label: "Camlog Monitor", icon: Monitor, href: "/" },
+  { label: "Newsletter Service", icon: Mail, href: "/newsletters" },
   { label: "ServiceLens", icon: Activity, href: "#" },
   { label: "Reporting & Analytics Hub", icon: BarChart3, href: "#" },
 ];
 
 export function PortalSidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="flex h-screen w-60 flex-col border-r bg-[hsl(222,47%,15%)] text-[hsl(210,40%,90%)]">
       {/* Logo */}
@@ -51,22 +57,25 @@ export function PortalSidebar() {
 
       {/* Nav Items */}
       <nav className="flex-1 space-y-0.5 px-3">
-        {navItems.map((item) => (
-          <a
-            key={item.label}
-            href={item.href}
-            className={cn(
-              "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
-              item.active
-                ? "bg-[hsl(217,91%,50%)] font-medium text-white"
-                : "text-[hsl(210,40%,75%)] hover:bg-[hsl(222,47%,20%)] hover:text-white"
-            )}
-          >
-            <item.icon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{item.label}</span>
-            {item.active && <ChevronRight className="ml-auto h-3.5 w-3.5" />}
-          </a>
-        ))}
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors",
+                isActive
+                  ? "bg-[hsl(217,91%,50%)] font-medium text-white"
+                  : "text-[hsl(210,40%,75%)] hover:bg-[hsl(222,47%,20%)] hover:text-white"
+              )}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              <span className="truncate">{item.label}</span>
+              {isActive && <ChevronRight className="ml-auto h-3.5 w-3.5" />}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* Bottom */}
