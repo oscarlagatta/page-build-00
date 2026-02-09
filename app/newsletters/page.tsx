@@ -195,7 +195,7 @@ export default function NewslettersPage() {
 
             {/* Statistics Cards */}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <Card className="border-border bg-card transition-all hover:border-primary/50">
+              <Card className="border-border bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:-translate-y-0.5">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     Total Newsletters
@@ -209,7 +209,7 @@ export default function NewslettersPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border bg-card transition-all hover:border-gray-400">
+              <Card className="border-border bg-card transition-all duration-300 hover:border-gray-400 hover:shadow-[0_0_20px_rgba(156,163,175,0.3)] hover:-translate-y-0.5">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     Draft
@@ -223,7 +223,7 @@ export default function NewslettersPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border bg-card transition-all hover:border-blue-400">
+              <Card className="border-border bg-card transition-all duration-300 hover:border-blue-400 hover:shadow-[0_0_20px_rgba(59,130,246,0.35)] hover:-translate-y-0.5">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     Submitted
@@ -237,7 +237,7 @@ export default function NewslettersPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border bg-card transition-all hover:border-emerald-400">
+              <Card className="border-border bg-card transition-all duration-300 hover:border-emerald-400 hover:shadow-[0_0_20px_rgba(16,185,129,0.35)] hover:-translate-y-0.5">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     Approved
@@ -251,7 +251,7 @@ export default function NewslettersPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border bg-card transition-all hover:border-green-500">
+              <Card className="border-border bg-card transition-all duration-300 hover:border-green-500 hover:shadow-[0_0_20px_rgba(34,197,94,0.35)] hover:-translate-y-0.5">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                     Published
