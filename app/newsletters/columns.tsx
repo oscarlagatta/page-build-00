@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -189,6 +190,8 @@ export const columns: ColumnDef<Newsletter>[] = [
     id: "actions",
     cell: ({ row }) => {
       const newsletter = row.original;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const router = useRouter();
 
       return (
         <DropdownMenu>
@@ -206,11 +209,15 @@ export const columns: ColumnDef<Newsletter>[] = [
               Copy newsletter ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push(`/newsletters/${newsletter.id}`)}
+            >
               <Eye className="mr-2 h-3.5 w-3.5" />
               View newsletter
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push(`/newsletters/${newsletter.id}`)}
+            >
               <Edit className="mr-2 h-3.5 w-3.5" />
               Edit newsletter
             </DropdownMenuItem>

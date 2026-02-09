@@ -60,9 +60,40 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+  const [dateFilterType, setDateFilterType] = React.useState<string>("created");
+  const [dateFrom, setDateFrom] = React.useState<string>("");
+  const [dateTo, setDateTo] = React.useState<string>("");
+
+  // Filter data by date range
+  const filteredData = React.useMemo(() => {
+    if (!dateFrom && !dateTo) return data;
+
+    return data.filter((item: any) => {
+      const dateField =
+        dateFilterType === "created"
+          ? "created_date"
+          : dateFilterType === "submitted"
+            ? "submitted_date"
+            : dateFilterType === "approved"
+              ? "approved_date"
+              : "published_date";
+
+      const itemDate = item[dateField];
+      if (!itemDate) return false;
+
+      const date = new Date(itemDate);
+      const from = dateFrom ? new Date(dateFrom) : null;
+      const to = dateTo ? new Date(dateTo) : null;
+
+      if (from && date < from) return false;
+      if (to && date > to) return false;
+
+      return true;
+    });
+  }, [data, dateFrom, dateTo, dateFilterType]);
 
   const table = useReactTable({
-    data,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -83,15 +114,16 @@ export function DataTable<TData, TValue>({
   return (
     <div className="flex flex-1 flex-col gap-4 overflow-hidden">
       {/* Filters */}
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search newsletters..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <Input
+            placeholder="Search newsletters..."
+            value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn("title")?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto gap-1.5 bg-transparent">
@@ -120,23 +152,72 @@ export function DataTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Select
-          value={(table.getColumn("status")?.getFilterValue() as string) ?? "all"}
-          onValueChange={(value) =>
-            table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="Draft">Draft</SelectItem>
-            <SelectItem value="Submitted">Submitted</SelectItem>
-            <SelectItem value="Approved">Approved</SelectItem>
-            <SelectItem value="Published">Published</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select
+            value={(table.getColumn("status")?.getFilterValue() as string) ?? "all"}
+            onValueChange={(value) =>
+              table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)
+            }
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+              <SelectItem value="Submitted">Submitted</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Published">Published</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Date Range Filters */}
+        <div className="flex items-center gap-2">
+          <Select value={dateFilterType} onValueChange={setDateFilterType}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Date type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created">Created</SelectItem>
+              <SelectItem value="submitted">Submitted</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-muted-foreground">From:</label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-[160px]"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-muted-foreground">To:</label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-[160px]"
+            />
+          </div>
+
+          {(dateFrom || dateTo) && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDateFrom("");
+                setDateTo("");
+              }}
+              className="h-8 px-2 lg:px-3"
+            >
+              Reset dates
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
