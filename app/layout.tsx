@@ -10,7 +10,6 @@ const _geistMono = Geist_Mono({ subsets: ['latin'] })
 export const metadata: Metadata = {
   title: 'Camlog Monitoring Dashboard | Enterprise Portal',
   description: 'Real-time Camlog event monitoring with intelligent status indicators and comprehensive data analytics.',
-  generator: 'v0.app',
 }
 
 export default function RootLayout({
