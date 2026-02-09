@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Eye, ChevronDown } from "lucide-react";
+import { Search, Eye, ChevronDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from "lucide-react";
 import { RawPayloadDrawer } from "./raw-payload-drawer";
 
 export type CamlogRow = {
@@ -293,7 +293,7 @@ export function CamlogTable({
 
           <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-foreground">Items per page:</span>
+              <span className="text-foreground">Rows per page:</span>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -312,9 +312,8 @@ export function CamlogTable({
               </select>
             </div>
 
-            <span className="text-muted-foreground">
-              Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of{" "}
-              {data.length} event{data.length === 1 ? "" : "s"}
+            <span className="text-xs font-medium text-foreground">
+              Page {currentPage} of {totalPages}
             </span>
 
             <div className="flex items-center gap-1">
@@ -322,40 +321,46 @@ export function CamlogTable({
                 type="button"
                 onClick={() => setCurrentPage(1)}
                 disabled={currentPage === 1}
-                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                title="First page"
+                className="flex h-7 w-7 items-center justify-center rounded border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
-                First
+                <ChevronsLeft className="h-4 w-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 disabled={currentPage === 1}
-                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                title="Previous page"
+                className="flex h-7 w-7 items-center justify-center rounded border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Previous
+                <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="px-2 text-xs font-medium text-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
               <button
                 type="button"
                 onClick={() =>
                   setCurrentPage(Math.min(totalPages, currentPage + 1))
                 }
                 disabled={currentPage === totalPages}
-                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                title="Next page"
+                className="flex h-7 w-7 items-center justify-center rounded border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Next
+                <ChevronRight className="h-4 w-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentPage(totalPages)}
                 disabled={currentPage === totalPages}
-                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+                title="Last page"
+                className="flex h-7 w-7 items-center justify-center rounded border border-border bg-background text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Last
+                <ChevronsRight className="h-4 w-4" />
               </button>
             </div>
+
+            <span className="text-muted-foreground">
+              Showing {startIndex + 1}-{Math.min(endIndex, data.length)} of{" "}
+              {data.length}
+            </span>
           </div>
         </div>
       </div>
