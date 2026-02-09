@@ -10,21 +10,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Switch } from "@/components/ui/switch";
-import { Search, ChevronRight } from "lucide-react";
-
-export type CamlogStatus = "GREEN" | "RED";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Search, Eye } from "lucide-react";
+import { RawPayloadDrawer } from "./raw-payload-drawer";
 
 export type CamlogRow = {
-  actionCode: string;
-  id: string;
-  timestamp: string;
-  status: CamlogStatus;
-  source: string;
-  metricType: string;
-  value: string;
-  target: string;
-  leader: string;
+  CMLG_TIMESTAMP: string;
+  CMLG_TRACE_ID: string;
+  CMLG_ACTION: string;
+  CMLG_SERVICE_NAME: string;
+  CMLG_CORRELATION_ID: string;
+  CMLG_ID: string;
+  ERR: string;
+  eventtype: string;
+  tag: string;
+  tag_eventtype: string;
+  log_level: string;
+  _raw: string;
 };
 
 interface CamlogTableProps {
@@ -52,18 +55,13 @@ function formatTimestamp(iso: string): string {
   }
 }
 
-function getStatusCellStyle(status: CamlogStatus) {
-  if (status === "GREEN") {
-    return "bg-emerald-100 text-emerald-800 font-semibold";
-  }
-  return "bg-red-100 text-red-800 font-semibold";
-}
-
-function getValueCellStyle(status: CamlogStatus) {
-  if (status === "GREEN") {
-    return "bg-emerald-50 text-emerald-700";
-  }
-  return "bg-red-50 text-red-700";
+function isError(row: CamlogRow): boolean {
+  return (
+    row.ERR === "Y" ||
+    row.eventtype === "error" ||
+    row.tag === "error" ||
+    row.tag_eventtype === "error"
+  );
 }
 
 export function CamlogTable({
@@ -73,9 +71,9 @@ export function CamlogTable({
   itemsPerPage = 10,
   onItemsPerPageChange,
 }: CamlogTableProps) {
-  const [showExpanded, setShowExpanded] = React.useState(false);
-  const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = React.useState(1);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [selectedRow, setSelectedRow] = React.useState<CamlogRow | null>(null);
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -86,268 +84,239 @@ export function CamlogTable({
     setCurrentPage(1);
   }, [data.length]);
 
+  const handleViewRaw = (row: CamlogRow, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedRow(row);
+    setDrawerOpen(true);
+  };
+
   return (
-    <div className="rounded-md border border-border bg-card">
-      {/* Table Header */}
-      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">
-            Camlog Event Scorecard
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Comprehensive view of all Camlog events with color-based status
-            indicators and expandable detail rows
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={showExpanded}
-              onCheckedChange={setShowExpanded}
-              className="data-[state=checked]:bg-[hsl(217,91%,40%)]"
-            />
-            <span className="text-xs text-muted-foreground">
-              Show details
-            </span>
+    <>
+      <div className="flex flex-1 flex-col overflow-hidden rounded-md border border-border bg-card">
+        {/* Table Header */}
+        <div className="flex flex-col gap-3 border-b border-border px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-foreground">
+              CAM Log Event Records
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Real-time monitoring with error detection and detailed payload inspection
+            </p>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search events..."
-              className="h-9 w-full bg-background pl-9 sm:w-[240px]"
+              placeholder="Search by Trace ID, Action, Service..."
+              className="h-9 w-full bg-background pl-9 sm:w-[300px]"
             />
           </div>
         </div>
-      </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[hsl(217,91%,40%)] hover:bg-[hsl(217,91%,40%)]">
-              <TableHead className="text-xs font-semibold text-white">
-                Action Code
-              </TableHead>
-              <TableHead className="text-xs font-semibold text-white">
-                Event ID
-              </TableHead>
-              <TableHead className="text-xs font-semibold text-white">
-                Metric Type
-              </TableHead>
-              <TableHead className="text-xs font-semibold text-white">
-                T/L
-              </TableHead>
-              <TableHead className="text-xs font-semibold text-white">
-                Source
-              </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-white">
-                Timestamp
-              </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-white">
-                Value
-              </TableHead>
-              <TableHead className="text-center text-xs font-semibold text-white">
-                Status
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {paginatedData.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="h-32 text-center text-muted-foreground"
-                >
-                  <div className="flex flex-col items-center justify-center gap-2">
-                    <Search className="h-8 w-8 text-muted-foreground/40" />
-                    <p className="text-sm">
-                      No events found. Try adjusting your filters.
-                    </p>
-                  </div>
-                </TableCell>
+        {/* Table */}
+        <div className="flex-1 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[hsl(217,91%,40%)] hover:bg-[hsl(217,91%,40%)]">
+                <TableHead className="text-xs font-semibold text-white">
+                  Timestamp
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-white">
+                  Trace ID
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-white">
+                  Action
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-white">
+                  Service
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-white">
+                  Correlation ID
+                </TableHead>
+                <TableHead className="text-xs font-semibold text-white">
+                  CMLG ID
+                </TableHead>
+                <TableHead className="text-center text-xs font-semibold text-white">
+                  Log Level
+                </TableHead>
+                <TableHead className="text-center text-xs font-semibold text-white">
+                  Status
+                </TableHead>
+                <TableHead className="text-center text-xs font-semibold text-white">
+                  Actions
+                </TableHead>
               </TableRow>
-            ) : (
-              paginatedData.map((row) => {
-                const isExpanded = showExpanded || expandedRows.has(row.id);
-                return (
-                  <React.Fragment key={row.id}>
-                    <TableRow className="cursor-pointer border-b border-border transition-colors hover:bg-muted/30" onClick={() => {
-                      const newExpanded = new Set(expandedRows);
-                      if (newExpanded.has(row.id)) {
-                        newExpanded.delete(row.id);
-                      } else {
-                        newExpanded.add(row.id);
-                      }
-                      setExpandedRows(newExpanded);
-                    }}>
-                      <TableCell className="text-sm font-medium text-foreground">
-                        <div className="flex items-center gap-1.5">
-                          <ChevronRight className={`h-3 w-3 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
-                          {row.actionCode}
-                        </div>
+            </TableHeader>
+
+            <TableBody>
+              {paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="h-32 text-center text-muted-foreground"
+                  >
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <Search className="h-8 w-8 text-muted-foreground/40" />
+                      <p className="text-sm">
+                        No events found. Try adjusting your filters.
+                      </p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((row) => {
+                  const hasError = isError(row);
+                  return (
+                    <TableRow
+                      key={row.CMLG_ID}
+                      className={`border-b border-border transition-colors ${
+                        hasError ? "bg-red-50 hover:bg-red-100" : "bg-emerald-50 hover:bg-emerald-100"
+                      }`}
+                    >
+                      <TableCell className="text-xs text-foreground">
+                        {formatTimestamp(row.CMLG_TIMESTAMP)}
+                      </TableCell>
+                      <TableCell className="font-mono text-xs font-medium text-foreground">
+                        {row.CMLG_TRACE_ID}
+                      </TableCell>
+                      <TableCell className="text-xs text-foreground">
+                        {row.CMLG_ACTION}
+                      </TableCell>
+                      <TableCell className="text-xs text-foreground">
+                        {row.CMLG_SERVICE_NAME}
                       </TableCell>
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {row.id}
+                        {row.CMLG_CORRELATION_ID}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {row.metricType}
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        <div className="space-y-0.5">
-                          <div>
-                            {"T: "}
-                            {row.target}
-                          </div>
-                          <div>
-                            {"L: "}
-                            {row.leader}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {row.source}
-                      </TableCell>
-                      <TableCell className="text-center text-xs text-muted-foreground">
-                        {formatTimestamp(row.timestamp)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-center text-xs ${getValueCellStyle(row.status)}`}
-                      >
-                        {row.value}
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {row.CMLG_ID}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span
-                          className={`inline-block rounded px-3 py-1 text-xs ${getStatusCellStyle(row.status)}`}
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            row.log_level === "INFO"
+                              ? "border-blue-300 bg-blue-50 text-blue-700"
+                              : "border-gray-300 bg-gray-50 text-gray-700"
+                          }`}
                         >
-                          {row.status}
-                        </span>
+                          {row.log_level}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          className={`text-xs font-bold ${
+                            hasError
+                              ? "bg-red-500 text-white hover:bg-red-500"
+                              : "bg-emerald-500 text-white hover:bg-emerald-500"
+                          }`}
+                        >
+                          {hasError ? "Error" : "OK"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleViewRaw(row, e)}
+                          className="h-7 gap-1.5 text-xs"
+                        >
+                          <Eye className="h-3 w-3" />
+                          View Raw
+                        </Button>
                       </TableCell>
                     </TableRow>
-                    {isExpanded && (
-                      <TableRow className="bg-muted/20">
-                        <TableCell
-                          colSpan={8}
-                          className="border-b-2 border-border py-3 pl-10 text-xs text-muted-foreground"
-                        >
-                          <div className="flex gap-8">
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Full ID:{" "}
-                              </span>
-                              {row.id}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Source:{" "}
-                              </span>
-                              {row.source}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Target:{" "}
-                              </span>
-                              {row.target}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Leader:{" "}
-                              </span>
-                              {row.leader}
-                            </div>
-                            <div>
-                              <span className="font-medium text-foreground">
-                                Metric Type:{" "}
-                              </span>
-                              {row.metricType}
-                            </div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </React.Fragment>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Footer with Pagination */}
+        <div className="flex flex-col gap-3 border-t border-border px-5 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-[hsl(217,91%,40%)]" />
+            <span>Data Source: Splunk Enterprise</span>
+          </div>
+
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-foreground">Items per page:</span>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  const newValue = Number(e.target.value);
+                  onItemsPerPageChange?.(newValue);
+                  setCurrentPage(1);
+                }}
+                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,40%)] focus:ring-offset-1"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+
+            <span className="text-muted-foreground">
+              Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of{" "}
+              {data.length} event{data.length === 1 ? "" : "s"}
+            </span>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                First
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="px-2 text-xs font-medium text-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                }
+                disabled={currentPage === totalPages}
+                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Footer with Pagination */}
-      <div className="flex flex-col gap-3 border-t border-border px-5 py-3 text-xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-[hsl(217,91%,40%)]" />
-          <span>
-            Data Source: Splunk Enterprise (MVP uses mock data)
-          </span>
-        </div>
-        
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-foreground">Items per page:</span>
-            <select
-              value={itemsPerPage}
-              onChange={(e) => {
-                const newValue = Number(e.target.value);
-                onItemsPerPageChange?.(newValue);
-                setCurrentPage(1);
-              }}
-              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted focus:outline-none focus:ring-2 focus:ring-[hsl(217,91%,40%)] focus:ring-offset-1"
-            >
-              <option value={5}>5</option>
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={20}>20</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-            </select>
-          </div>
-          
-          <span className="text-muted-foreground">
-            Showing {startIndex + 1} to {Math.min(endIndex, data.length)} of {data.length} event{data.length === 1 ? "" : "s"}
-          </span>
-          
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              First
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span className="px-2 text-xs font-medium text-foreground">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="rounded border border-border bg-background px-2 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Last
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Raw Payload Drawer */}
+      <RawPayloadDrawer
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        rawData={selectedRow?._raw || ""}
+        recordId={selectedRow?.CMLG_ID || ""}
+      />
+    </>
   );
 }

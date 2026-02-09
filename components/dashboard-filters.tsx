@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { ChevronDown, ChevronUp, Filter, Calendar, User, Tag, Layers, Database } from "lucide-react";
 
-type CamlogStatus = "GREEN" | "RED";
+type CamlogStatus = "OK" | "ERROR";
 
 interface DashboardFiltersProps {
   statusFilter: "ALL" | CamlogStatus;
@@ -58,45 +58,29 @@ export function DashboardFilters({
 
       {!collapsed && (
         <div className="border-t border-border px-5 py-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {/* Reporting Period */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Calendar className="h-3 w-3" />
-                Reporting Period
-              </label>
-              <Select defaultValue="all">
-                <SelectTrigger className="h-9 bg-card text-foreground">
-                  <SelectValue placeholder="All Months" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Months</SelectItem>
-                  <SelectItem value="jan">January 2026</SelectItem>
-                  <SelectItem value="feb">February 2026</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Action Code Filter */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
+            {/* Service Name Filter */}
             <div className="space-y-1.5">
               <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                 <Tag className="h-3 w-3" />
-                Action Code
+                Service Name
               </label>
               <Select
                 value={actionCodeFilter}
                 onValueChange={onActionCodeFilterChange}
               >
                 <SelectTrigger className="h-9 bg-card text-foreground">
-                  <SelectValue placeholder="All Action Codes" />
+                  <SelectValue placeholder="All Services" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Action Codes</SelectItem>
-                  <SelectItem value="AC-102">AC-102</SelectItem>
-                  <SelectItem value="AC-221">AC-221</SelectItem>
-                  <SelectItem value="AC-310">AC-310</SelectItem>
-                  <SelectItem value="AC-155">AC-155</SelectItem>
-                  <SelectItem value="AC-421">AC-421</SelectItem>
+                  <SelectItem value="ALL">All Services</SelectItem>
+                  <SelectItem value="APIPaymentsControllerV2">APIPaymentsControllerV2</SelectItem>
+                  <SelectItem value="Approvals">Approvals</SelectItem>
+                  <SelectItem value="GPOTxnEventListener">GPOTxnEventListener</SelectItem>
+                  <SelectItem value="OPHConfigCheck">OPHConfigCheck</SelectItem>
+                  <SelectItem value="Orchestration">Orchestration</SelectItem>
+                  <SelectItem value="PaymentRetrieval">PaymentRetrieval</SelectItem>
+                  <SelectItem value="PubsubService">PubsubService</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -117,51 +101,14 @@ export function DashboardFilters({
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Status</SelectItem>
-                  <SelectItem value="GREEN">Green Only</SelectItem>
-                  <SelectItem value="RED">Red Only</SelectItem>
+                  <SelectItem value="ALL">All Events</SelectItem>
+                  <SelectItem value="OK">OK Only</SelectItem>
+                  <SelectItem value="ERROR">Errors Only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Source */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Database className="h-3 w-3" />
-                Source
-              </label>
-              <Select
-                value={sourceFilter}
-                onValueChange={onSourceFilterChange}
-              >
-                <SelectTrigger className="h-9 bg-card text-foreground">
-                  <SelectValue placeholder="All Sources" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ALL">All Sources</SelectItem>
-                  <SelectItem value="Splunk">Splunk</SelectItem>
-                  <SelectItem value="DataMart">DataMart</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Leader */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <User className="h-3 w-3" />
-                Leader
-              </label>
-              <Select defaultValue="all">
-                <SelectTrigger className="h-9 bg-card text-foreground">
-                  <SelectValue placeholder="All Leaders" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Leaders</SelectItem>
-                  <SelectItem value="ops">Operations</SelectItem>
-                  <SelectItem value="eng">Engineering</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
         </div>
       )}

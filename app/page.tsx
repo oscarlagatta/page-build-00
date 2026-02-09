@@ -3,8 +3,7 @@
 import * as React from "react";
 import { PortalSidebar } from "@/components/portal-sidebar";
 import { DashboardFilters } from "@/components/dashboard-filters";
-import { CamlogTable } from "@/components/camlog-table";
-import type { CamlogRow, CamlogStatus } from "@/components/camlog-table";
+import { CamlogTable, type CamlogRow } from "@/components/camlog-table";
 import { KpiCards } from "@/components/kpi-cards";
 import {
   Breadcrumb,
@@ -16,59 +15,58 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Download, Home } from "lucide-react";
-
-const mockData: CamlogRow[] = [
-  { actionCode: "AC-102", id: "WTX-884120", timestamp: "2026-02-06T13:42:10Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "3339.73", target: "0.00", leader: "0.00" },
-  { actionCode: "AC-221", id: "WTX-884121", timestamp: "2026-02-06T13:45:02Z", status: "RED", source: "DataMart", metricType: "Operational", value: "1.41%", target: "2.00%", leader: "2.50%" },
-  { actionCode: "AC-102", id: "WTX-884122", timestamp: "2026-02-06T13:47:55Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "686.39", target: "0.00", leader: "0.00" },
-  { actionCode: "AC-310", id: "WTX-884123", timestamp: "2026-02-06T13:50:09Z", status: "GREEN", source: "DataMart", metricType: "Operational", value: "0.76%", target: "1.00%", leader: "1.50%" },
-  { actionCode: "AC-155", id: "WTX-884124", timestamp: "2026-02-06T13:52:31Z", status: "RED", source: "Splunk", metricType: "Performance", value: "57.14%", target: "46.50%", leader: "52.00%" },
-  { actionCode: "AC-102", id: "WTX-884125", timestamp: "2026-02-06T13:55:08Z", status: "GREEN", source: "DataMart", metricType: "Operational", value: "0.00", target: "3.00", leader: "4.00" },
-  { actionCode: "AC-421", id: "WTX-884126", timestamp: "2026-02-06T13:58:44Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "100.00%", target: "80.50%", leader: "73.00%" },
-  { actionCode: "AC-221", id: "WTX-884127", timestamp: "2026-02-06T14:01:19Z", status: "RED", source: "DataMart", metricType: "Operational", value: "NDTR", target: "45.00%", leader: "0.00%" },
-  { actionCode: "AC-310", id: "WTX-884128", timestamp: "2026-02-06T14:04:52Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "444.12", target: "0.00", leader: "0.00" },
-  { actionCode: "AC-102", id: "WTX-884129", timestamp: "2026-02-06T14:07:28Z", status: "GREEN", source: "DataMart", metricType: "Operational", value: "91.84%", target: "83.50%", leader: "81.00%" },
-  { actionCode: "AC-155", id: "WTX-884130", timestamp: "2026-02-06T14:10:15Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "5880.73", target: "0.00", leader: "0.00" },
-  { actionCode: "AC-421", id: "WTX-884131", timestamp: "2026-02-06T14:13:42Z", status: "RED", source: "DataMart", metricType: "Operational", value: "NDTR", target: "95.00%", leader: "90.00%" },
-  { actionCode: "AC-310", id: "WTX-884132", timestamp: "2026-02-06T14:16:30Z", status: "GREEN", source: "Splunk", metricType: "Performance", value: "100.00%", target: "96.00%", leader: "91.50%" },
-  { actionCode: "AC-102", id: "WTX-884133", timestamp: "2026-02-06T14:19:55Z", status: "GREEN", source: "DataMart", metricType: "Operational", value: "100.00%", target: "85.00%", leader: "80.00%" },
-  { actionCode: "AC-221", id: "WTX-884134", timestamp: "2026-02-06T14:22:18Z", status: "RED", source: "Splunk", metricType: "Performance", value: "0.00", target: "0.00", leader: "2.00" },
-];
+import camLogsData from "@/data/cam_logs_synthetic.json";
 
 const tabs = [
   { label: "Camlog Overview", active: true },
 ];
 
+function isError(row: CamlogRow): boolean {
+  return (
+    row.ERR === "Y" ||
+    row.eventtype === "error" ||
+    row.tag === "error" ||
+    row.tag_eventtype === "error"
+  );
+}
+
 export default function Page() {
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"ALL" | CamlogStatus>("ALL");
-  const [sourceFilter, setSourceFilter] = React.useState("ALL");
-  const [actionCodeFilter, setActionCodeFilter] = React.useState("ALL");
+  const [statusFilter, setStatusFilter] = React.useState<"ALL" | "OK" | "ERROR">("ALL");
+  const [serviceFilter, setServiceFilter] = React.useState("ALL");
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [itemsPerPage, setItemsPerPage] = React.useState(10);
 
   const filteredData = React.useMemo(() => {
-    return mockData
-      .filter((row) => (statusFilter === "ALL" ? true : row.status === statusFilter))
-      .filter((row) => (sourceFilter === "ALL" ? true : row.source === sourceFilter))
-      .filter((row) => (actionCodeFilter === "ALL" ? true : row.actionCode === actionCodeFilter))
+    return (camLogsData as CamlogRow[])
+      .filter((row) => {
+        if (statusFilter === "ALL") return true;
+        const hasError = isError(row);
+        return statusFilter === "ERROR" ? hasError : !hasError;
+      })
+      .filter((row) => (serviceFilter === "ALL" ? true : row.CMLG_SERVICE_NAME === serviceFilter))
       .filter((row) => {
         if (!searchQuery.trim()) return true;
         const q = searchQuery.toLowerCase();
         return (
-          row.actionCode.toLowerCase().includes(q) ||
-          row.id.toLowerCase().includes(q) ||
-          row.timestamp.toLowerCase().includes(q) ||
-          row.value.toLowerCase().includes(q)
+          row.CMLG_TRACE_ID.toLowerCase().includes(q) ||
+          row.CMLG_ACTION.toLowerCase().includes(q) ||
+          row.CMLG_SERVICE_NAME.toLowerCase().includes(q) ||
+          row.CMLG_CORRELATION_ID.toLowerCase().includes(q) ||
+          row.CMLG_ID.toLowerCase().includes(q)
         );
+      })
+      .sort((a, b) => {
+        // Sort by timestamp, newest first
+        return new Date(b.CMLG_TIMESTAMP).getTime() - new Date(a.CMLG_TIMESTAMP).getTime();
       });
-  }, [searchQuery, statusFilter, sourceFilter, actionCodeFilter]);
+  }, [searchQuery, statusFilter, serviceFilter]);
 
   const statistics = React.useMemo(() => {
     const total = filteredData.length;
-    const green = filteredData.filter((r) => r.status === "GREEN").length;
-    const red = filteredData.filter((r) => r.status === "RED").length;
-    return { total, green, red };
+    const errors = filteredData.filter((r) => isError(r)).length;
+    const ok = total - errors;
+    return { total, ok, errors };
   }, [filteredData]);
 
   const handleRefresh = () => {
@@ -150,25 +148,25 @@ export default function Page() {
             <DashboardFilters
               statusFilter={statusFilter}
               onStatusFilterChange={setStatusFilter}
-              sourceFilter={sourceFilter}
-              onSourceFilterChange={setSourceFilter}
-              actionCodeFilter={actionCodeFilter}
-              onActionCodeFilterChange={setActionCodeFilter}
+              sourceFilter={serviceFilter}
+              onSourceFilterChange={setServiceFilter}
+              actionCodeFilter={serviceFilter}
+              onActionCodeFilterChange={setServiceFilter}
             />
 
             {/* Section Title */}
             <div>
               <h2 className="text-lg font-semibold text-foreground">
-                Metrics Overview
+                Event Statistics
               </h2>
             </div>
 
             {/* KPI Cards */}
             <KpiCards
               total={statistics.total}
-              green={statistics.green}
-              red={statistics.red}
-              totalRecords={mockData.length}
+              green={statistics.ok}
+              red={statistics.errors}
+              totalRecords={(camLogsData as CamlogRow[]).length}
             />
 
             {/* Table */}
